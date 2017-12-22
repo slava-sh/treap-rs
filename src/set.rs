@@ -25,6 +25,10 @@ where
         self.map.is_empty()
     }
 
+    pub fn clear(&mut self) {
+        self.map.clear();
+    }
+
     pub fn insert(&mut self, value: T) -> bool {
         self.map.insert(value, ()).is_none()
     }
@@ -58,5 +62,7 @@ mod tests {
         assert_eq!(t.contains(&"a"), false);
         assert_eq!(t.remove(&"a"), false);
         assert_eq!(t.contains(&"b"), true);
+        t.clear();
+        assert!(t.is_empty());
     }
 }
