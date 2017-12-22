@@ -2,6 +2,7 @@ extern crate rand;
 
 use node::Node;
 
+#[derive(Debug, Clone)]
 pub struct TreapMap<K, V, Rng> {
     root: Option<Box<Node<K, V>>>,
     len: usize,
@@ -15,6 +16,12 @@ impl<K, V> TreapMap<K, V, rand::XorShiftRng> {
             len: 0,
             rng: rand::weak_rng(),
         }
+    }
+}
+
+impl<K, V> Default for TreapMap<K, V, rand::XorShiftRng> {
+    fn default() -> Self {
+        TreapMap::new()
     }
 }
 

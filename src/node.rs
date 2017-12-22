@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 
+#[derive(Debug, Clone)]
 pub struct Node<K, V> {
     pub key: K,
     pub value: V,
