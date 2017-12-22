@@ -1,0 +1,7 @@
+[package]
+name = "treap"
+version = "0.1.0"
+authors = ["Slava Shklyaev <slava@slava.sh>"]
+
+[dependencies]
+rand = "0.3"
