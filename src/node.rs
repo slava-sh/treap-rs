@@ -92,4 +92,22 @@ where
         *root = Node::merge3(left, Some(Box::new(new)), right);
         old
     }
+
+    pub fn remove(root: &mut Option<Box<Node<K, V>>>, key: &K) -> Option<Box<Node<K, V>>> {
+        let (left, node, right) = Node::split3(root.take(), key);
+        *root = Node::merge2(left, right);
+        node
+    }
+
+    pub fn get<'a>(root: &'a Option<Box<Node<K, V>>>, key: &K) -> Option<&'a Box<Node<K, V>>> {
+        let mut next_node = root;
+        while let Some(ref node) = *next_node {
+            match node.key.cmp(key) {
+                Ordering::Equal => return Some(node),
+                Ordering::Less => next_node = &node.right,
+                Ordering::Greater => next_node = &node.left,
+            }
+        }
+        None
+    }
 }

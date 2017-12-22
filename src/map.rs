@@ -33,13 +33,23 @@ where
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         let new_node = Node::new(key, value, self.rng.gen());
-        match Node::insert_or_replace(&mut self.root, new_node) {
-            Some(old_node) => Some(old_node.value),
-            None => {
+        Node::insert_or_replace(&mut self.root, new_node)
+            .map(|old_node| old_node.value)
+            .or_else(|| {
                 self.len += 1;
                 None
-            }
-        }
+            })
+    }
+
+    pub fn remove(&mut self, key: &K) -> Option<V> {
+        Node::remove(&mut self.root, key).map(|node| {
+            self.len -= 1;
+            node.value
+        })
+    }
+
+    pub fn get<'a>(&'a self, key: &K) -> Option<&'a V> {
+        Node::get(&self.root, key).as_ref().map(|node| &node.value)
     }
 }
 
@@ -58,5 +68,9 @@ mod tests {
         assert_eq!(t.len(), 1);
         assert_eq!(t.insert("b", 4), None);
         assert_eq!(t.len(), 2);
+        assert_eq!(t.remove(&"a"), Some(1));
+        assert_eq!(t.len(), 1);
+        assert_eq!(t.get(&"a"), None);
+        assert_eq!(t.get(&"b"), Some(&4));
     }
 }
