@@ -24,7 +24,7 @@ impl<T, S> Default for TreapSet<T, S> {
 impl<T, S, Rng> TreapSet<T, S, Rng>
 where
     T: Ord,
-    S: SetStats<T>,
+    S: SetStats<T> + Clone,
     Rng: rand::Rng,
 {
     pub fn len(&self) -> usize {

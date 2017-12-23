@@ -30,7 +30,7 @@ impl<K, V, S> Default for TreapMap<K, V, S> {
 impl<K, V, S, Rng> TreapMap<K, V, S, Rng>
 where
     K: Ord,
-    S: MapStats<K, V>,
+    S: MapStats<K, V> + Clone,
     Rng: rand::Rng,
 {
     pub fn len(&self) -> usize {

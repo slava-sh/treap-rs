@@ -1,7 +1,7 @@
 use map_stats::MapStats;
 pub use map_stats::EmptyStats;
 
-pub trait SetStats<T>: Clone {
+pub trait SetStats<T> {
     fn compute(value: &T, left: Option<&Self>, right: Option<&Self>) -> Self;
 }
 

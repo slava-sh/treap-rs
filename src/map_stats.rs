@@ -1,4 +1,4 @@
-pub trait MapStats<K, V>: Clone {
+pub trait MapStats<K, V> {
     fn compute(key: &K, value: &V, left: Option<&Self>, right: Option<&Self>) -> Self;
 }
 
