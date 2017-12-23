@@ -1,16 +1,24 @@
 extern crate rand;
 
+use node;
 use node::Node;
+use std::ops::Range;
 
 #[derive(Debug, Clone)]
-pub struct TreapMap<K, V, Rng = rand::XorShiftRng> {
-    root: Option<Box<Node<K, V>>>,
+pub struct TreapMap<K, V, S = node::EmptyStats, Rng = rand::XorShiftRng> {
+    root: Option<Box<Node<K, V, S>>>,
     len: usize,
     rng: Rng,
 }
 
 impl<K, V> TreapMap<K, V> {
     pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+impl<K, V, S> Default for TreapMap<K, V, S> {
+    fn default() -> Self {
         TreapMap {
             root: None,
             len: 0,
@@ -19,15 +27,10 @@ impl<K, V> TreapMap<K, V> {
     }
 }
 
-impl<K, V> Default for TreapMap<K, V, rand::XorShiftRng> {
-    fn default() -> Self {
-        TreapMap::new()
-    }
-}
-
-impl<K, V, Rng> TreapMap<K, V, Rng>
+impl<K, V, S, Rng> TreapMap<K, V, S, Rng>
 where
     K: Ord,
+    S: node::NodeStats<K, V>,
     Rng: rand::Rng,
 {
     pub fn len(&self) -> usize {
@@ -63,6 +66,14 @@ where
     pub fn get(&self, key: &K) -> Option<&V> {
         Node::get(&self.root, key).as_ref().map(|node| &node.value)
     }
+
+    pub fn stats(&self, key_range: Range<&K>) -> Option<S> {
+        Node::with_range(&self.root, key_range, |node| node.stats.clone())
+    }
+
+    pub fn stats_full(&self) -> Option<S> {
+        self.root.as_ref().map(|node| node.stats.clone())
+    }
 }
 
 #[cfg(test)]
@@ -87,5 +98,34 @@ mod tests {
         assert_eq!(t.get(&"b"), Some(&4));
         t.clear();
         assert!(t.is_empty());
+    }
+
+    #[test]
+    fn state() {
+        let mut t: TreapMap<_, _, ValueSum> = TreapMap::default();
+        for i in 0..10 {
+            assert_eq!(t.insert(i, i), None);
+        }
+        assert_eq!(t.len(), 10);
+        assert_eq!(t.stats(&3..&6), Some(ValueSum { sum: 3 + 4 + 5 }));
+        assert_eq!(t.stats_full(), Some(ValueSum { sum: 9 * 10 / 2 }));
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct ValueSum {
+        pub sum: i32,
+    }
+
+    impl<K> node::NodeStats<K, i32> for ValueSum {
+        fn compute(_key: &K, value: &i32, left: Option<&Self>, right: Option<&Self>) -> Self {
+            let mut sum = *value;
+            if let Some(left) = left {
+                sum += left.sum;
+            }
+            if let Some(right) = right {
+                sum += right.sum;
+            }
+            ValueSum { sum }
+        }
     }
 }
