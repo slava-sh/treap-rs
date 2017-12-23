@@ -3,13 +3,13 @@ extern crate rand;
 use node::Node;
 
 #[derive(Debug, Clone)]
-pub struct TreapMap<K, V, Rng> {
+pub struct TreapMap<K, V, Rng = rand::XorShiftRng> {
     root: Option<Box<Node<K, V>>>,
     len: usize,
     rng: Rng,
 }
 
-impl<K, V> TreapMap<K, V, rand::XorShiftRng> {
+impl<K, V> TreapMap<K, V> {
     pub fn new() -> Self {
         TreapMap {
             root: None,

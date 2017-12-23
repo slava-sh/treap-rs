@@ -3,11 +3,11 @@ extern crate rand;
 use map::TreapMap;
 
 #[derive(Debug, Clone)]
-pub struct TreapSet<T, Rng> {
+pub struct TreapSet<T, Rng = rand::XorShiftRng> {
     map: TreapMap<T, (), Rng>,
 }
 
-impl<T> TreapSet<T, rand::XorShiftRng> {
+impl<T> TreapSet<T> {
     pub fn new() -> Self {
         TreapSet { map: TreapMap::new() }
     }
