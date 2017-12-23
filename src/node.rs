@@ -1,3 +1,4 @@
+use map_stats::MapStats;
 use std::cmp::Ordering;
 use std::ops::Range;
 
@@ -11,17 +12,13 @@ pub struct Node<K, V, S> {
     right: Option<Box<Node<K, V, S>>>,
 }
 
-pub trait NodeStats<K, V>: Clone {
-    fn compute(key: &K, value: &V, left: Option<&Self>, right: Option<&Self>) -> Self;
-}
-
 impl<K, V, S> Node<K, V, S>
 where
     K: Ord,
-    S: NodeStats<K, V>,
+    S: MapStats<K, V>,
 {
     pub fn new(key: K, value: V, priority: usize) -> Node<K, V, S> {
-        let stats = NodeStats::compute(&key, &value, None, None);
+        let stats = MapStats::compute(&key, &value, None, None);
         Node {
             key,
             value,
@@ -33,7 +30,7 @@ where
     }
 
     fn update_stats(&mut self) {
-        self.stats = NodeStats::compute(
+        self.stats = MapStats::compute(
             &self.key,
             &self.value,
             self.left.as_ref().map(|node| &node.stats),
@@ -169,13 +166,4 @@ where
 
 fn unsafe_mut<T>(value: &T) -> &mut T {
     unsafe { &mut *(value as *const T as *mut T) }
-}
-
-#[derive(Debug, Clone)]
-pub struct EmptyStats;
-
-impl<K, V> NodeStats<K, V> for EmptyStats {
-    fn compute(_key: &K, _value: &V, _left: Option<&Self>, _right: Option<&Self>) -> Self {
-        EmptyStats
-    }
 }

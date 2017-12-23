@@ -1,27 +1,30 @@
 extern crate rand;
 
+use set_stats::{SetStats, EmptyStats, SetStatsToMapStats};
 use map::TreapMap;
+use std::ops::Range;
 
 #[derive(Debug, Clone)]
-pub struct TreapSet<T, Rng = rand::XorShiftRng> {
-    map: TreapMap<T, (), Rng>,
+pub struct TreapSet<T, S = EmptyStats, Rng = rand::XorShiftRng> {
+    map: TreapMap<T, (), SetStatsToMapStats<S>, Rng>,
 }
 
 impl<T> TreapSet<T> {
     pub fn new() -> Self {
-        TreapSet { map: TreapMap::new() }
+        Default::default()
     }
 }
 
-impl<T> Default for TreapSet<T, rand::XorShiftRng> {
+impl<T, S> Default for TreapSet<T, S> {
     fn default() -> Self {
-        TreapSet::new()
+        TreapSet { map: Default::default() }
     }
 }
 
-impl<T, Rng> TreapSet<T, Rng>
+impl<T, S, Rng> TreapSet<T, S, Rng>
 where
     T: Ord,
+    S: SetStats<T>,
     Rng: rand::Rng,
 {
     pub fn len(&self) -> usize {
@@ -47,6 +50,14 @@ where
     pub fn contains(&self, value: &T) -> bool {
         self.map.get(value).is_some()
     }
+
+    pub fn stats(&self, range: Range<&T>) -> Option<S> {
+        self.map.stats(range).map(|map_stats| map_stats.set_stats)
+    }
+
+    pub fn stats_full(&self) -> Option<S> {
+        self.map.stats_full().map(|map_stats| map_stats.set_stats)
+    }
 }
 
 #[cfg(test)]
@@ -71,5 +82,34 @@ mod tests {
         assert_eq!(t.contains(&"b"), true);
         t.clear();
         assert!(t.is_empty());
+    }
+
+    #[test]
+    fn stats() {
+        let mut t: TreapSet<_, Stats> = TreapSet::default();
+        for i in 0..10 {
+            assert!(t.insert(i));
+        }
+        assert_eq!(t.len(), 10);
+        assert_eq!(t.stats(&3..&6), Some(Stats { sum: 3 + 4 + 5 }));
+        assert_eq!(t.stats_full(), Some(Stats { sum: 9 * 10 / 2 }));
+    }
+
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub struct Stats {
+        pub sum: isize,
+    }
+
+    impl SetStats<isize> for Stats {
+        fn compute(value: &isize, left: Option<&Self>, right: Option<&Self>) -> Self {
+            let mut sum = *value;
+            if let Some(left) = left {
+                sum += left.sum;
+            }
+            if let Some(right) = right {
+                sum += right.sum;
+            }
+            Stats { sum }
+        }
     }
 }

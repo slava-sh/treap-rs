@@ -1,11 +1,11 @@
 extern crate rand;
 
-use node;
+use map_stats::{MapStats, EmptyStats};
 use node::Node;
 use std::ops::Range;
 
 #[derive(Debug, Clone)]
-pub struct TreapMap<K, V, S = node::EmptyStats, Rng = rand::XorShiftRng> {
+pub struct TreapMap<K, V, S = EmptyStats, Rng = rand::XorShiftRng> {
     root: Option<Box<Node<K, V, S>>>,
     len: usize,
     rng: Rng,
@@ -30,7 +30,7 @@ impl<K, V, S> Default for TreapMap<K, V, S> {
 impl<K, V, S, Rng> TreapMap<K, V, S, Rng>
 where
     K: Ord,
-    S: node::NodeStats<K, V>,
+    S: MapStats<K, V>,
     Rng: rand::Rng,
 {
     pub fn len(&self) -> usize {
@@ -101,31 +101,47 @@ mod tests {
     }
 
     #[test]
-    fn state() {
-        let mut t: TreapMap<_, _, ValueSum> = TreapMap::default();
+    fn stats() {
+        let mut t: TreapMap<_, _, Stats> = TreapMap::default();
         for i in 0..10 {
-            assert_eq!(t.insert(i, i), None);
+            assert_eq!(t.insert(i, i * 10), None);
         }
         assert_eq!(t.len(), 10);
-        assert_eq!(t.stats(&3..&6), Some(ValueSum { sum: 3 + 4 + 5 }));
-        assert_eq!(t.stats_full(), Some(ValueSum { sum: 9 * 10 / 2 }));
+        assert_eq!(
+            t.stats(&3..&6),
+            Some(Stats {
+                key_sum: (3 + 4 + 5),
+                value_sum: (3 + 4 + 5) * 10,
+            })
+        );
+        assert_eq!(
+            t.stats_full(),
+            Some(Stats {
+                key_sum: 9 * (9 + 1) / 2,
+                value_sum: 9 * (9 + 1) / 2 * 10,
+            })
+        );
     }
 
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct ValueSum {
-        pub sum: i32,
+    pub struct Stats {
+        pub key_sum: isize,
+        pub value_sum: isize,
     }
 
-    impl<K> node::NodeStats<K, i32> for ValueSum {
-        fn compute(_key: &K, value: &i32, left: Option<&Self>, right: Option<&Self>) -> Self {
-            let mut sum = *value;
+    impl MapStats<isize, isize> for Stats {
+        fn compute(key: &isize, value: &isize, left: Option<&Self>, right: Option<&Self>) -> Self {
+            let mut key_sum = *key;
+            let mut value_sum = *value;
             if let Some(left) = left {
-                sum += left.sum;
+                key_sum += left.key_sum;;
+                value_sum += left.value_sum;
             }
             if let Some(right) = right {
-                sum += right.sum;
+                key_sum += right.key_sum;;
+                value_sum += right.value_sum;
             }
-            ValueSum { sum }
+            Stats { key_sum, value_sum }
         }
     }
 }
